@@ -2,60 +2,7 @@ import Autobase from 'autobase'
 import b4a from 'b4a'
 import Hyperdrive from 'hyperdrive'
 import Hyperbee from 'hyperbee'
-import Autobee from 'autobee-example'
-
-const proxyHyperbee = (base, bee) => {
-  return new Proxy(bee, {
-    get(target, prop, receiver) {
-      const value = target[prop]
-      if (prop === 'view') {
-        return bee
-      }
-
-      if (value instanceof Function) {
-        switch (prop) {
-          case 'put':
-            return (key, value, opts) => {
-              const encKey = opts && opts.keyEncoding ? opts.keyEncoding.encode(key) : key
-              if (opts && opts.keyEncoding) {
-                delete opts.keyEncoding
-              }
-
-              return target.append({
-                type: 'put',
-                key: encKey,
-                value,
-                opts
-              })
-            }
-          case 'get':
-            return (key, opts) => target.view.get(key, opts)
-          case 'peek':
-            return (opts) => target.view.peek(opts)
-          case 'createReadStream':
-            return (range, opts) => target.view.createReadStream(range, opts)
-
-          case 'append':
-            return (obj) => {
-              console.log('bee append', obj)
-              // obj.type = 'bee-' + obj.type
-              return target.append(obj)
-            }
-           case 'getHeader':
-            // HACK attempting to patch the fact that AutoCores don't respect .get(index, { wait: false })
-            return (opts) => {
-              if ('wait' in opts && !opts.wait && target.core.length === 0) {
-                return false
-              }
-              return Reflect.get(...arguments)
-            }
-        }
-      }
-
-      return Reflect.get(...arguments)
-    }
-  })
-}
+import Hyperblobs from 'hyperblobs'
 
 export default class Autodrive extends Autobase {
   constructor (store, bootstrap, handlers = {}) {
@@ -65,38 +12,54 @@ export default class Autodrive extends Autobase {
     }
 
     function open (viewStore) {
-      const bee = new Hyperbee(viewStore.get('db', { cache: true }), { extension: false  })
+      // Create underlying hypercore datastructures without hyperdrive to work around readying immediately
+      const db = new Hyperbee(viewStore.get('db'), {
+        keyEncoding: 'utf-8',
+        valueEncoding: 'json',
+        metadata: { contentFeed: null },
+        extension: false
+      })
+      const blobs = new Hyperblobs(viewStore.get('blobs'))
       return {
-        bee,
-        drive: new Hyperdrive(viewStore, { _db: proxyHyperbee(this, bee)  })
+        db,
+        blobs
       }
     }
 
     const apply = 'apply' in handlers ? handlers.apply : Autodrive.apply
 
     super(store, bootstrap, { ...handlers, open, apply })
+
+    // Cache for hyperdrive object
+    this._drive = null
   }
 
-  // async _open () {
-  //   return super._open()
-  // }
+  // Populate hyperdrive object
+  _ensureDrive () {
+    if (!this._drive && !this._applying) throw Error('Couldnt make a drive yet as `apply` hasnt been called.')
+
+    // todo figure out if a length check on the db is a good idea
+    if (!this._drive && this._applying) {
+      this._drive = new Hyperdrive(this.store, { _db: this.view.db })
+      this._drive.blobs = this.view.blobs
+    }
+  }
 
   static async apply (batch, view, base) {
-    const b = view.drive // .batch()
-
-    console.log('view.bee.opening', view.bee.opening)
-    console.log('batch', batch)
-    await Autobee.apply(batch, view.bee, base)
+    base._ensureDrive()
 
     for (const node of batch) {
       const op = node.value
       if (op.type === 'drive-put') {
-        await b.put(op.path, op.buffer, op.opts)
+        await base._drive.put(op.path, op.buffer, op.opts)
       }
     }
-
-    // await b.flush()
   }
+
+  // // TODO Figure out how not to conflict with autobase's .version
+  // get version () {
+  //   return this.view.db.version
+  // }
 
   async put (path, buffer, opts = {}) {
     return this.append({
@@ -106,7 +69,17 @@ export default class Autodrive extends Autobase {
     })
   }
 
+  async del (path) {
+    throw Error('.del() not implemented')
+  }
+
   async get (path, opts = {}) {
-    return this.view.get(path, opts)
+    this._ensureDrive()
+    return this._drive.get(path, { prefetch: false, ...opts })
+  }
+
+  exists (path) {
+    this._ensureDrive()
+    return this._drive.exists(path)
   }
 }

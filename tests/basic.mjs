@@ -20,9 +20,17 @@ test('basic put example', async (t) => {
   // TODO Maybe remove as it might not be necessary?
   await drive.ready()
 
+  // // TODO Figure out how to support actions on the hyperdrive before anything has been applied.
+  // t.absent(await drive.exists('/blob.txt'), 'file doesnt exist yet')
+
   const input = Buffer.from('example')
   await drive.put('/blob.txt', input)
 
-  // const entry = await drive.get('/blob.txt')
-  // t.alike(entry, input)
+  const entry = await drive.get('/blob.txt')
+  t.alike(entry, input)
+
+  t.ok(await drive.exists('/blob.txt'), 'file exists')
+  t.absent(await drive.exists('/non-existent.txt'), 'non-existent doesnt exist')
+
+  t.ok('win')
 })
