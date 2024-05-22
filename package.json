@@ -1,0 +1,25 @@
+{
+  "name": "autodrive-example",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "brittle tests/*.mjs"
+  },
+  "keywords": [],
+  "author": "Sean Zellmer <sean@lejeunerenard.com> (http://lejeunerenard.com/)",
+  "license": "MIT",
+  "description": "",
+  "devDependencies": {
+    "@eslint/js": "^9.3.0",
+    "brittle": "^3.5.2",
+    "corestore": "^6.18.2",
+    "eslint": "^9.3.0",
+    "globals": "^15.2.0",
+    "random-access-memory": "^6.2.1"
+  },
+  "dependencies": {
+    "autobase": "^6.0.32",
+    "autobee-example": "file:../autobee-example",
+    "hyperdrive": "^11.8.1"
+  }
+}
