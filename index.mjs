@@ -54,6 +54,8 @@ export default class Autodrive extends Autobase {
         await base._drive.put(op.path, op.buffer, op.opts)
       } else if (op.type === 'drive-del') {
         await base._drive.del(op.path)
+      } else if (op.type === 'drive-symlink') {
+        await base._drive.symlink(op.path, op.linkname)
       }
     }
   }
@@ -93,5 +95,10 @@ export default class Autodrive extends Autobase {
   list (path, opts) {
     this._ensureDrive()
     return this._drive.list(path, opts)
+  }
+
+  symlink (path, linkname) {
+    this._ensureDrive()
+    return this.append({ type: 'drive-symlink', path, linkname })
   }
 }

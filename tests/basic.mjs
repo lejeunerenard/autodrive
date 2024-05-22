@@ -91,3 +91,24 @@ test('.del()', async (t) => {
 
   t.absent(await drive.exists('/a.txt'))
 })
+
+test('.symlink()', async (t) => {
+  const store = new Corestore(RAM.reusable())
+  const drive = new Autodrive(store, null, { valueEncoding: c.any })
+
+  await drive.put('/a.txt', Buffer.from('a'))
+  t.ok(await drive.exists('/a.txt'))
+
+  await drive.symlink('/b.txt', '/a.txt')
+  const entry = await drive.entry('/b.txt')
+  t.alike(entry, {
+    seq: 2,
+    key: '/b.txt',
+    value: {
+      executable: false,
+      linkname: '/a.txt',
+      blob: null,
+      metadata: null
+    }
+  })
+})
