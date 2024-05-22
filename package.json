@@ -1,5 +1,5 @@
 {
-  "name": "autodrive-example",
+  "name": "autodrive",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -8,7 +8,7 @@
   "keywords": [],
   "author": "Sean Zellmer <sean@lejeunerenard.com> (http://lejeunerenard.com/)",
   "license": "MIT",
-  "description": "",
+  "description": "An Autobase version of Hyperdrive",
   "devDependencies": {
     "@eslint/js": "^9.3.0",
     "brittle": "^3.5.2",
@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "autobase": "^6.0.32",
-    "autobee-example": "file:../autobee-example",
     "hyperdrive": "^11.8.1"
   }
 }
