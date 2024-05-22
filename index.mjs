@@ -82,4 +82,14 @@ export default class Autodrive extends Autobase {
     this._ensureDrive()
     return this._drive.exists(path)
   }
+
+  entry (path, opts) {
+    this._ensureDrive()
+    return this._drive.entry(path, opts)
+  }
+
+  list (path, opts) {
+    this._ensureDrive()
+    return this._drive.list(path, opts)
+  }
 }
