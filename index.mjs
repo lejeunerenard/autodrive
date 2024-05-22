@@ -52,6 +52,8 @@ export default class Autodrive extends Autobase {
       const op = node.value
       if (op.type === 'drive-put') {
         await base._drive.put(op.path, op.buffer, op.opts)
+      } else if (op.type === 'drive-del') {
+        await base._drive.del(op.path)
       }
     }
   }
@@ -70,7 +72,7 @@ export default class Autodrive extends Autobase {
   }
 
   async del (path) {
-    throw Error('.del() not implemented')
+    return this.append({ type: 'drive-del', path })
   }
 
   async get (path, opts = {}) {

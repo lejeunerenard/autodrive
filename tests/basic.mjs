@@ -78,3 +78,16 @@ test('.entry()', async (t) => {
     metadata: null
   } })
 })
+
+test('.del()', async (t) => {
+  const store = new Corestore(RAM.reusable())
+  const drive = new Autodrive(store, null, { valueEncoding: c.any })
+
+  await drive.put('/a.txt', Buffer.from('a'))
+
+  t.ok(await drive.exists('/a.txt'))
+
+  await drive.del('/a.txt')
+
+  t.absent(await drive.exists('/a.txt'))
+})
