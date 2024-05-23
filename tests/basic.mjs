@@ -138,8 +138,6 @@ test('.getBlobs()', async (t) => {
   const store = new Corestore(RAM.reusable())
   const drive = new Autodrive(store, null, { valueEncoding: c.any })
 
-  await drive.ready()
-
   const blobs = await drive.getBlobs()
   t.is(blobs, drive.view.blobs)
 })
