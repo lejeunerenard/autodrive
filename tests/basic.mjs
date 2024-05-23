@@ -24,9 +24,9 @@ test('constructor', async (t) => {
 test('.put()', async (t) => {
   const store = new Corestore(RAM.reusable())
   const drive = new Autodrive(store, null, { valueEncoding: c.any })
+  await drive.ready()
 
-  // // TODO Figure out how to support actions on the hyperdrive before anything has been applied.
-  // t.absent(await drive.exists('/blob.txt'), 'file doesnt exist yet')
+  t.absent(await drive.exists('/blob.txt'), 'file doesnt exist yet')
 
   const input = Buffer.from('example')
   await drive.put('/blob.txt', input)
@@ -141,8 +141,7 @@ test('.getBlobs()', async (t) => {
   const store = new Corestore(RAM.reusable())
   const drive = new Autodrive(store, null, { valueEncoding: c.any })
 
-  // TODO remove if needing to create hyperdrive while in `apply` is fixed
-  await drive.put('/a.txt', Buffer.from('a'))
+  await drive.ready()
 
   const blobs = await drive.getBlobs()
   t.is(blobs, drive.view.blobs)

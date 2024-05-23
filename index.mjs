@@ -12,7 +12,8 @@ export default class Autodrive extends Autobase {
     }
 
     function open (viewStore) {
-      // Create underlying hypercore datastructures without hyperdrive to work around readying immediately
+      // Create underlying hypercore data structures without hyperdrive to work
+      // around readying immediately
       const db = new Hyperbee(viewStore.get('db'), {
         keyEncoding: 'utf-8',
         valueEncoding: 'json',
@@ -34,20 +35,16 @@ export default class Autodrive extends Autobase {
     this._drive = null
   }
 
-  // Populate hyperdrive object
-  _ensureDrive () {
-    if (!this._drive && !this._applying) throw Error('Couldnt make a drive yet as `apply` hasnt been called.')
-
-    // todo figure out if a length check on the db is a good idea
-    if (!this._drive && this._applying) {
+  async _open () {
+    await super._open()
+    if (!this._drive) {
       this._drive = new Hyperdrive(this.store, { _db: this.view.db })
       this._drive.blobs = this.view.blobs
     }
+    await this._drive
   }
 
   static async apply (batch, view, base) {
-    base._ensureDrive()
-
     for (const node of batch) {
       const op = node.value
       if (op.type === 'drive-put') {
@@ -66,7 +63,6 @@ export default class Autodrive extends Autobase {
   // }
 
   getBlobs () {
-    this._ensureDrive()
     return this._drive.getBlobs()
   }
 
@@ -84,27 +80,22 @@ export default class Autodrive extends Autobase {
   }
 
   async get (path, opts = {}) {
-    this._ensureDrive()
     return this._drive.get(path, { prefetch: false, ...opts })
   }
 
   exists (path) {
-    this._ensureDrive()
     return this._drive.exists(path)
   }
 
   entry (path, opts) {
-    this._ensureDrive()
     return this._drive.entry(path, opts)
   }
 
   list (path, opts) {
-    this._ensureDrive()
     return this._drive.list(path, opts)
   }
 
   symlink (path, linkname) {
-    this._ensureDrive()
     return this.append({ type: 'drive-symlink', path, linkname })
   }
 }
