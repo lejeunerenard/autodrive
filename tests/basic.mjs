@@ -143,3 +143,28 @@ test('.getBlobs()', async (t) => {
   const blobs = await drive.getBlobs()
   t.is(blobs, drive.view.blobs)
 })
+
+test('.close() then reopen', async (t) => {
+  const storage = RAM.reusable()
+  const store = new Corestore(storage)
+  const drive = new Autodrive(store, null, { valueEncoding: c.any })
+
+  const input = Buffer.from('example')
+  await drive.put('/blob.txt', input)
+
+  const file = await drive.get('/blob.txt')
+  t.alike(file, input)
+
+  const contentKeyBefore = drive.contentKey
+  await drive.close()
+
+  const store2 = new Corestore(storage)
+  const drive2 = new Autodrive(store2, null, { valueEncoding: c.any })
+
+  const file2 = await drive2.get('/blob.txt')
+  t.alike(file2, input)
+
+  const contentKeyAfter = drive2.contentKey
+  t.alike(contentKeyBefore, contentKeyAfter)
+  await drive2.close()
+})
