@@ -11,7 +11,7 @@ export default class Autodrive extends Autobase {
       bootstrap = null
     }
 
-    function open (viewStore) {
+    function open (viewStore, base) {
       // Create underlying hypercore data structures without hyperdrive to work
       // around readying immediately
       const db = new Hyperbee(viewStore.get('db'), {
@@ -21,38 +21,25 @@ export default class Autodrive extends Autobase {
         extension: false
       })
       const blobs = new Hyperblobs(viewStore.get('blobs'))
-      return {
-        db,
-        blobs
-      }
+      const drive = new Hyperdrive(base.store, { _db: db })
+      drive.blobs = blobs
+      return drive
     }
 
     const apply = 'apply' in handlers ? handlers.apply : Autodrive.apply
 
     super(store, bootstrap, { ...handlers, open, apply })
-
-    // Cache for hyperdrive object
-    this._drive = null
   }
 
-  async _open () {
-    await super._open()
-    if (!this._drive) {
-      this._drive = new Hyperdrive(this.store, { _db: this.view.db })
-      this._drive.blobs = this.view.blobs
-    }
-    await this._drive
-  }
-
-  static async apply (batch, view, base) {
+  static async apply (batch, drive) {
     for (const node of batch) {
       const op = node.value
       if (op.type === 'drive-put') {
-        await base._drive.put(op.path, op.buffer, op.opts)
+        await drive.put(op.path, op.buffer, op.opts)
       } else if (op.type === 'drive-del') {
-        await base._drive.del(op.path)
+        await drive.del(op.path)
       } else if (op.type === 'drive-symlink') {
-        await base._drive.symlink(op.path, op.linkname)
+        await drive.symlink(op.path, op.linkname)
       }
     }
   }
@@ -63,7 +50,7 @@ export default class Autodrive extends Autobase {
   // }
 
   getBlobs () {
-    return this._drive.getBlobs()
+    return this.view.getBlobs()
   }
 
   async put (path, buffer, opts = {}) {
@@ -80,19 +67,19 @@ export default class Autodrive extends Autobase {
   }
 
   async get (path, opts = {}) {
-    return this._drive.get(path, { prefetch: false, ...opts })
+    return this.view.get(path, { prefetch: false, ...opts })
   }
 
   exists (path) {
-    return this._drive.exists(path)
+    return this.view.exists(path)
   }
 
   entry (path, opts) {
-    return this._drive.entry(path, opts)
+    return this.view.entry(path, opts)
   }
 
   list (path, opts) {
-    return this._drive.list(path, opts)
+    return this.view.list(path, opts)
   }
 
   symlink (path, linkname) {

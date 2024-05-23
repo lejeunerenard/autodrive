@@ -16,15 +16,12 @@ test('constructor', async (t) => {
   const store = new Corestore(RAM.reusable())
   const drive = new Autodrive(store)
 
-  await drive.ready()
-
   t.is(drive._handlers.apply, Autodrive.apply)
 })
 
 test('.put()', async (t) => {
   const store = new Corestore(RAM.reusable())
   const drive = new Autodrive(store, null, { valueEncoding: c.any })
-  await drive.ready()
 
   t.absent(await drive.exists('/blob.txt'), 'file doesnt exist yet')
 
