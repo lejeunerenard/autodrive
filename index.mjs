@@ -65,6 +65,11 @@ export default class Autodrive extends Autobase {
   //   return this.view.db.version
   // }
 
+  getBlobs () {
+    this._ensureDrive()
+    return this._drive.getBlobs()
+  }
+
   async put (path, buffer, opts = {}) {
     return this.append({
       type: 'drive-put',

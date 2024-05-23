@@ -136,3 +136,14 @@ test('.symlink()', async (t) => {
     }
   })
 })
+
+test('.getBlobs()', async (t) => {
+  const store = new Corestore(RAM.reusable())
+  const drive = new Autodrive(store, null, { valueEncoding: c.any })
+
+  // TODO remove if needing to create hyperdrive while in `apply` is fixed
+  await drive.put('/a.txt', Buffer.from('a'))
+
+  const blobs = await drive.getBlobs()
+  t.is(blobs, drive.view.blobs)
+})
