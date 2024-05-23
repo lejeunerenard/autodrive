@@ -69,7 +69,8 @@ export default class Autodrive extends Autobase {
     return this.append({
       type: 'drive-put',
       path,
-      buffer
+      buffer,
+      opts
     })
   }
 

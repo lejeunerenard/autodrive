@@ -21,7 +21,7 @@ test('constructor', async (t) => {
   t.is(drive._handlers.apply, Autodrive.apply)
 })
 
-test('basic put example', async (t) => {
+test('.put()', async (t) => {
   const store = new Corestore(RAM.reusable())
   const drive = new Autodrive(store, null, { valueEncoding: c.any })
 
@@ -31,11 +31,35 @@ test('basic put example', async (t) => {
   const input = Buffer.from('example')
   await drive.put('/blob.txt', input)
 
-  const entry = await drive.get('/blob.txt')
-  t.alike(entry, input)
+  const file = await drive.get('/blob.txt')
+  t.alike(file, input)
 
   t.ok(await drive.exists('/blob.txt'), 'file exists')
   t.absent(await drive.exists('/non-existent.txt'), 'non-existent doesnt exist')
+
+  await drive.put('/has-metadata.txt', Buffer.from('b'), {
+    executable: true,
+    metadata: {
+      beep: 'boop'
+    }
+  })
+
+  const entry = await drive.entry('/has-metadata.txt')
+  t.alike({
+    key: entry.key,
+    value: {
+      executable: entry.value.executable,
+      metadata: entry.value.metadata,
+    }
+  }, {
+    key: '/has-metadata.txt',
+    value: {
+      executable: true,
+      metadata: {
+        beep: 'boop'
+      }
+    }
+  })
 })
 
 test('list()', async (t) => {
