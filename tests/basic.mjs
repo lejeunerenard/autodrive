@@ -3,6 +3,11 @@ import Corestore from 'corestore'
 import RAM from 'random-access-memory'
 import c from 'compact-encoding'
 import Autodrive from '../index.mjs'
+import b4a from 'b4a'
+import fs from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+import { pipeline } from 'stream/promises'
 
 const iterToArray = async (iter) => {
   const output = []
@@ -165,4 +170,43 @@ test('.close() then reopen', async (t) => {
   const contentKeyAfter = drive2.contentKey
   t.alike(contentKeyBefore, contentKeyAfter)
   await drive2.close()
+})
+
+// Requires AutocoreSession.core & AutocoreSession.download
+test.skip('.mirror()', async (t) => {
+  const storeA = new Corestore(RAM.reusable())
+  const a = new Autodrive(storeA, null, { valueEncoding: c.any })
+  const storeB = new Corestore(RAM.reusable())
+  const b = new Autodrive(storeB, null, { valueEncoding: c.any })
+
+  await a.ready()
+  await b.ready()
+
+  await a.put('/file.txt', 'hello world')
+
+  await a.mirror(b).done()
+  await b.update()
+
+  const file = await b.get('/file.txt')
+  t.alike(file, b4a.from('hello world'))
+})
+
+test('.createWriteStream()', async (t) => {
+  const store = new Corestore(RAM.reusable())
+  const drive = new Autodrive(store, null, { valueEncoding: c.any })
+  await drive.ready()
+
+  const stream = drive.createWriteStream('/a.txt')
+  const sourceFile = join(dirname(fileURLToPath(import.meta.url)), 'fixtures/test.txt')
+  const fileRs = fs.createReadStream(sourceFile)
+
+  await pipeline(
+    fileRs,
+    stream
+  )
+
+  const output = await drive.get('/a.txt')
+  t.alike(output, Buffer.from('Testing\n'))
+
+  t.absent(drive._writeStreams.has('/a.txt'), 'stream was removed')
 })

@@ -3,6 +3,8 @@ import b4a from 'b4a'
 import Hyperdrive from 'hyperdrive'
 import Hyperbee from 'hyperbee'
 import Hyperblobs from 'hyperblobs'
+import MirrorDrive from 'mirror-drive'
+import { WriteStream } from './lib/streams.mjs'
 
 export default class Autodrive extends Autobase {
   constructor (store, bootstrap, handlers = {}) {
@@ -31,9 +33,10 @@ export default class Autodrive extends Autobase {
     const apply = 'apply' in handlers ? handlers.apply : Autodrive.apply
 
     super(store, bootstrap, { ...handlers, open, apply })
+    this._writeStreams = new Map()
   }
 
-  static async apply (batch, drive) {
+  static async apply (batch, drive, base) {
     for (const node of batch) {
       const op = node.value
       if (op.type === 'drive-put') {
@@ -42,6 +45,25 @@ export default class Autodrive extends Autobase {
         await drive.del(op.path)
       } else if (op.type === 'drive-symlink') {
         await drive.symlink(op.path, op.linkname)
+      } else if (op.type === 'drive-ws-chunk') {
+        const name = op.name
+        const stream = base._writeStreams.has(name)
+          ? base._writeStreams.get(name)
+          : drive.createWriteStream(name, op.opts)
+            .on('finish', () => base._writeStreams.delete(name))
+
+        base._writeStreams.set(name, stream)
+
+        for (const chunk of op.batch) {
+          stream.write(chunk)
+        }
+      } else if (op.type === 'drive-ws-end') {
+        const name = op.name
+        const stream = base._writeStreams.has(name)
+          ? base._writeStreams.get(name)
+          : null
+
+        stream.end()
       }
     }
   }
@@ -90,5 +112,17 @@ export default class Autodrive extends Autobase {
 
   symlink (path, linkname) {
     return this.append({ type: 'drive-symlink', path, linkname })
+  }
+
+  mirror (out, opts) {
+    return new MirrorDrive(this, out, opts)
+  }
+
+  createWriteStream (name, { executable = false, metadata = null } = {}) {
+    return new WriteStream(this, name, { executable, linkname: null, metadata })
+  }
+
+  createReadStream (path, opts) {
+    return this.view.createReadStream(path, opts)
   }
 }
