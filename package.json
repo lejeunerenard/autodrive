@@ -11,6 +11,7 @@
   "description": "An Autobase version of Hyperdrive",
   "devDependencies": {
     "@eslint/js": "^9.3.0",
+    "autobase-test-helpers": "^2.0.5",
     "brittle": "^3.5.2",
     "corestore": "^6.18.2",
     "eslint": "^9.3.0",
