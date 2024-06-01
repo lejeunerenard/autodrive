@@ -71,7 +71,7 @@ The `.view` property is an instance of `Hyperdrive` by default.
       yet.
 - [ ] `.readdir(folder)`
 - [ ] `.entries([range], [options])`
-- [/] `.mirror(out, [options])`  
+- [ ] `.mirror(out, [options])`  
       This feature is implemented, but is waiting on features in `Autobase`'s
       `AutoCoreSession` to be implemented.
 - [ ] `.watch([folder])`
