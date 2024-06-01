@@ -24,6 +24,20 @@ test('constructor', async (t) => {
   t.is(drive._handlers.apply, Autodrive.apply)
 })
 
+test('.db', async (t) => {
+  const store = new Corestore(RAM.reusable())
+  const drive = new Autodrive(store)
+
+  t.is(drive.db, drive.view.db)
+})
+
+test('.core', async (t) => {
+  const store = new Corestore(RAM.reusable())
+  const drive = new Autodrive(store)
+
+  t.is(drive.core, drive.view.db.core)
+})
+
 test('.put()', async (t) => {
   const store = new Corestore(RAM.reusable())
   const drive = new Autodrive(store, null, { valueEncoding: c.any })

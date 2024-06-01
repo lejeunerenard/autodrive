@@ -22,6 +22,8 @@ export default class Autodrive extends Autobase {
         metadata: { contentFeed: null },
         extension: false
       })
+      base.db = db
+
       // Name for blobs doesnt need to be derived from the hyperbee key since
       // there is a unique namespace for the viewstore
       const blobs = new Hyperblobs(viewStore.get('blobs'))
@@ -72,6 +74,14 @@ export default class Autodrive extends Autobase {
   // get version () {
   //   return this.view.db.version
   // }
+
+  get corestore () {
+    return this.store
+  }
+
+  get core () {
+    return this.db.core
+  }
 
   get contentKey () {
     return this.view.contentKey
